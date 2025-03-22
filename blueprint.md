@@ -17,6 +17,38 @@ If an object has mass, it should either attract other objects, or get attracted 
 - m2 = Mass of object 2
 - r = Distance between the centers of the two objects
 
+This should attract the weaker mass object, but in reality, planets dont just always crash into the star, they orbit! We can apply the escape velocity formula.
+
+- Use this formula: vescape = sqrt((2*G*M)/r)
+- G = Gravitational Constant
+- M = Mass of the body to be escaped from
+- r = Distance from the center of the mass (or the heavier object)
+
+If the object's velocity is greater than or equal to vescape, it will get kicked out of its orbit. If it's lower, it either orbits or falls in.
+
+Now we need to make sure that the planet stays in its orbit. Using the orbital velocity that is.
+
+- Use this formula: vorbit = sqrt((G*M)/r)
+- G = Gravitational Constant
+- M = Mass of the body to be escaped from
+- r = Distance from the center of the mass (or the heavier object)
+
+if velocity is less than vorbit, the object will spiral inward and crash.
+if velocity is equal to vorbit, the object will orbit.
+if velocity is between vorbit and vescape, it will follow an eliptical orbit.
+if velocity is greater vescape, it escapes the system.
+
+A little bit of bonus:
+Simulating Motion with Newton's Laws
+
+If you want to simulate movement step by step, use acceleration:
+
+a = F/m
+a = acceleration, F = Force, m = mass
+
+- Calculate acceleration due to gravity
+- Update velocity and position over time (Euler or Verlet integration)
+
 ### Collision
 
 When two objects collide, there are 3 possible things that can happen (at least in this project):
