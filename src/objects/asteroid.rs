@@ -1,4 +1,4 @@
-use super::object::{Object, ObjectFactory};
+use crate::objects::object::{Object, ObjectFactory};
 use rand::random_range;
 use raylib::prelude::*;
 
@@ -29,12 +29,17 @@ impl Object for Asteroid {
         d.draw_rectangle_v(
             self.position,
             Vector2::new(self.width, self.height),
-            Color::ORANGERED,
+            Color::GRAY,
         );
     }
 
     fn update(&mut self) {
-        self.position += self.velocity;
+        let velocity = self.velocity
+            / Vector2 {
+                x: 0xF as f32,
+                y: 0xF as f32,
+            };
+        self.position += velocity;
     }
 
     fn apply_force(&mut self, force: raylib::prelude::Vector2) {
@@ -44,11 +49,11 @@ impl Object for Asteroid {
     fn is_colliding(&mut self, other: &dyn Object) -> bool {
         let other_pos = other.get_position();
 
-        let x_overlap = (self.position.x < other_pos.x + other.get_width()) &&
-                        (self.position.x + self.width > other_pos.x);
+        let x_overlap = (self.position.x < other_pos.x + other.get_width())
+            && (self.position.x + self.width > other_pos.x);
 
-        let y_overlap = (self.position.y < other_pos.y + other.get_height()) &&
-                        (self.position.y + self.height > other_pos.y);
+        let y_overlap = (self.position.y < other_pos.y + other.get_height())
+            && (self.position.y + self.height > other_pos.y);
 
         x_overlap && y_overlap
     }
@@ -71,51 +76,5 @@ impl Object for Asteroid {
 
     fn get_mass(&self) -> f32 {
         self.mass
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::objects::object::Object;
-
-    use super::Asteroid;
-    use raylib::prelude::*;
-    use std::io;
-
-    #[test]
-    fn is_colliding_result() {
-        let mut xinput: String = String::new();
-        io::stdin()
-            .read_line(&mut xinput)
-            .expect("Your input operation trashed");
-
-        let mut yinput: String = String::new();
-        io::stdin()
-            .read_line(&mut yinput)
-            .expect("Your input operation trashed");
-
-        let x: i32 = xinput.trim().parse().expect("Your parse operation trashed");
-        let y: i32 = yinput.trim().parse().expect("Your pase operation trashed");
-
-        let mut asteroid1 = Asteroid {
-            position: Vector2::new(10.0, 10.0),
-            velocity: Vector2::new(0.0, 0.0),
-            width: 20.0,
-            height: 20.0,
-            mass: 10.0,
-            density: 1.0,
-        };
-
-        let asteroid2 = Asteroid {
-            position: Vector2::new(x as f32, y as f32), // Slightly overlapping
-            velocity: Vector2::new(0.0, 0.0),
-            width: 20.0,
-            height: 20.0,
-            mass: 10.0,
-            density: 1.0,
-        };
-
-        assert!(asteroid1.is_colliding(&asteroid2), "Guess what bro, no hitbox collided");
-        // eprintln!("💀 Rest in peace, little assert. You will be missed.");
     }
 }
