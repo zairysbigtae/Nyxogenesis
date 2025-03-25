@@ -2,8 +2,8 @@ use crate::objects::object::{Object, ObjectFactory};
 // use crate::objects::ObjectAccessor;
 use rand::random_range;
 use raylib::prelude::*;
-use std::sync::{Arc, RwLockWriteGuard};
 use rayon::prelude::*;
+use std::sync::{Arc, RwLockWriteGuard};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Asteroid {
@@ -13,6 +13,7 @@ pub struct Asteroid {
     pub height: f32,
     pub mass: f32,
     pub density: f32,
+    pub color: Color,
 }
 
 impl ObjectFactory for Asteroid {
@@ -20,10 +21,13 @@ impl ObjectFactory for Asteroid {
         Self {
             position: Vector2 { x: 0.0, y: 0.0 },
             velocity: Vector2 { x: 0.0, y: 0.0 },
-            width: 10.0,
-            height: 10.0,
+            // width: 10.0,
+            // height: 10.0,
+            width: self.mass,
+            height: self.mass,
             mass: self.density + (self.width * self.height),
             density: random_range(0.5..5.0),
+            color: Color::GRAY,
         }
     }
 }
@@ -33,7 +37,7 @@ impl Object for Asteroid {
         d.draw_rectangle_v(
             self.position,
             Vector2::new(self.width, self.height),
-            Color::GRAY,
+            self.color,
         );
     }
 
@@ -44,23 +48,47 @@ impl Object for Asteroid {
         //         y: 0xF as f32,
         //     };
         self.position += self.velocity;
+        self.width = self.mass / self.density * 0.05;
+        self.height = self.mass / self.density * 0.05;
     }
 
     fn collision_update(
         &self,
-        objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>
+        objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>,
+        cooldown: &mut i32,
     ) {
-        objects.par_iter().enumerate().for_each(|(i, obj_i)| {
-            for obj_j in &objects[(i+1)..objects.len()] {
-                if obj_i.get_position().distance_to(obj_j.get_position()) > 20.0 {
-                    continue;
-                }
+        // Gets the number of objects so we dont have to run it again, and cause another borrow
+        // checker issues...
+        let len = objects.len();
 
-                if objects[i].is_colliding(obj_j.as_ref()) {
-                    // println!("Collision detected between {:?} and {:?}", i, j);
+        for i in 0..len {
+            let obj_i = objects[i].as_mut() as *mut dyn Object;
+            for j in (i + 1)..len {
+                let obj_j = objects[j].as_mut() as *mut dyn Object;
+
+                // TODO: Make this unsafe somehow..?
+                unsafe {
+                    if (*obj_i).is_colliding(&*obj_j) && *cooldown <= 0 {
+                        if (*obj_i).get_mass() > (*obj_j).get_mass() {
+                            // FIXME: You heard the comment, fix me
+                            (*obj_i).set_mass((*obj_i).get_mass() + (*obj_j).get_mass());
+                            // Resets the cooldown
+                            *cooldown = 600;
+                        } else if (*obj_j).get_mass() > (*obj_i).get_mass() {
+                            (*obj_j).set_mass((*obj_j).get_mass() + (*obj_i).get_mass());
+                            // Resets the cooldown
+                            *cooldown = 600;
+                        }
+                    } else if *cooldown > 0 {
+                        *cooldown -= 1;
+                    }
                 }
             }
-        })
+        }
+    }
+
+    fn set_mass(&mut self, new_mass: f32) {
+        self.mass = new_mass;
     }
 
     fn apply_force(&mut self, force: raylib::prelude::Vector2) {
@@ -122,5 +150,13 @@ impl Object for Asteroid {
 
     fn clone_box(&self) -> Box<dyn Object> {
         Box::new(self.clone())
+    }
+
+    fn get_color(&self) -> Color {
+        self.color
+    }
+
+    fn set_color(&mut self, new_color: Color) {
+        self.color = new_color;
     }
 }

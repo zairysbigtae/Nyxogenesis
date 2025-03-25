@@ -12,7 +12,7 @@ fn main() {
     
     {
         let mut asteroids = asteroids.write().unwrap();
-        for _ in 0..100 {
+        for _ in 0..5 {
             let density = random_range(0.1..10.0);
             let cube_size = random_range(5.0..20.0);
 
@@ -24,10 +24,11 @@ fn main() {
                 height: cube_size,
                 mass: density * (cube_size * cube_size/*This calculates the area*/),
                 density: density,
+                color: Color::GRAY,
             }));
         }
     }
-    let mut frame_count = 0;
+    let mut collision_cooldown = 600;
 
     rl.set_target_fps(60);
 
@@ -39,12 +40,12 @@ fn main() {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
 
-        if frame_count % 60 == 0 {
-            let mut fps_text = String::new();
-            write!(&mut fps_text, "FPS: {}", fps).unwrap();
+        // if frame_count % 60 == 0 {
+        let mut fps_text = String::new();
+        write!(&mut fps_text, "FPS: {}", fps).unwrap();
 
-            d.draw_text(&fps_text, 10, 10, 16, Color::WHITE);
-        }
+        d.draw_text(&fps_text, 10, 10, 16, Color::WHITE);
+        // }
 
         {
             let asteroids = &mut asteroids.write().unwrap();
@@ -56,6 +57,7 @@ fn main() {
         }
 
         {
+            // TODO: Find a way on how to NOT use Clone and Copy features
             let cloned_asteroids = {
                 let asteroids = asteroids.read().unwrap();
                 asteroids.clone()
@@ -64,7 +66,7 @@ fn main() {
             let mut asteroids_lock = asteroids.write().unwrap();
 
             for a in &cloned_asteroids {
-                a.collision_update(&mut asteroids_lock);
+                a.collision_update(&mut asteroids_lock, &mut collision_cooldown);
             }
         }
     }

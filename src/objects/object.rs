@@ -8,7 +8,7 @@ pub trait Object: std::fmt::Debug + Send + Sync {
     fn apply_force(&mut self, force: Vector2);
     fn is_colliding(&self, other: &dyn Object) -> bool;
     fn is_colliding_box(&mut self, other: &Box<dyn Object>) -> bool;
-    fn collision_update(&self, objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>);
+    fn collision_update(&self, objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>, cooldown: &mut i32);
 
     fn gravity_system(&mut self, other: &dyn Object);
     // fn engulf(&mut self, other_vector: &mut Vec<Box<dyn Object>>, index: usize);
@@ -19,6 +19,11 @@ pub trait Object: std::fmt::Debug + Send + Sync {
     fn get_width(&self) -> f32;
     fn get_height(&self) -> f32;
     fn get_mass(&self) -> f32;
+    fn get_color(&self) -> Color;
+
+    fn set_mass(&mut self, new_mass: f32);
+    fn set_color(&mut self, new_color: Color);
+
     fn clone_box(&self) -> Box<dyn Object>;
 }
 
