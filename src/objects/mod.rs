@@ -2,6 +2,7 @@ use asteroid::Asteroid;
 use object::Object;
 
 pub mod asteroid;
+pub mod planet;
 pub mod object;
 
 pub trait ObjectAccessor {

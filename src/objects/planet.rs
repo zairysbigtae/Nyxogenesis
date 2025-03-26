@@ -1,14 +1,12 @@
-use crate::objects::object::{Object, ObjectFactory};
-// use crate::objects::ObjectAccessor;
-use rand::random_range;
+use crate::objects::Object;
+use std::sync::RwLockWriteGuard;
 use raylib::prelude::*;
-use rayon::prelude::*;
-use std::sync::{Arc, RwLockWriteGuard};
+use rand::random_range;
 
-const G: f32 = 0.01; // Gravitational constant.
+const G: f32 = 69.0; // Gravitational constant.
 
-#[derive(Clone, Copy, Debug)]
-pub struct Asteroid {
+#[derive(Debug, Clone, Copy)]
+pub struct Planet {
     pub position: Vector2,
     pub velocity: Vector2,
     pub width: f32,
@@ -18,9 +16,9 @@ pub struct Asteroid {
     pub color: Color,
 }
 
-impl Asteroid {
+impl Planet {
     pub fn new(&self) -> Self {
-        Asteroid {
+        Planet {
             position: Vector2 { x: 0.0, y: 0.0 },
             velocity: Vector2 { x: 0.0, y: 0.0 },
             // width: 10.0,
@@ -40,7 +38,7 @@ impl Asteroid {
 
         let force_magnitude = (G * self.get_mass() * other.get_mass()) / (distance * distance);
         let direction = (other.get_position() - self.get_position()).normalized();
-        (direction * force_magnitude) / rand::random_range(0.0..2.0)
+        direction * force_magnitude
     }
 
     // Computes the orbital velocity based on gravitational attraction (I will assume it is a circular orbit).
@@ -63,64 +61,16 @@ impl Asteroid {
     }
 }
 
-impl Object for Asteroid {
-    fn draw(&self, d: &mut raylib::prelude::RaylibDrawHandle) {
-        d.draw_rectangle_v(
-            self.position,
-            Vector2::new(self.width, self.height),
-            self.color,
-        );
+impl Object for Planet {
+    fn draw(&self, d: &mut RaylibDrawHandle) {
+        d.draw_circle_v(self.position, self.get_width() / 2.0, self.get_color());
     }
 
     fn update(&mut self, other: Option<&dyn Object>) {
-        // let velocity = self.velocity
-        //     / Vector2 {
-        //         x: 0xF as f32,
-        //         y: 0xF as f32,
-        //     };
         self.position += self.velocity;
-        if let Some(other) = other {
+        if let Some(other) = other {   
             self.gravity_system(other);
         }
-    }
-
-    fn collision_update(
-        &self,
-        objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>,
-        cooldown: &mut i32,
-    ) {
-        // Gets the number of objects so we dont have to run it again, and cause another borrow
-        // checker issues...
-        // let len = objects.len();
-        //
-        // for i in 0..len {
-        //     let obj_i = objects[i].as_mut() as *mut dyn Object;
-        //     for j in (i + 1)..len {
-        //         let obj_j = objects[j].as_mut() as *mut dyn Object;
-
-                // TODO: Make this safe somehow..?
-                // unsafe {
-                //     if (*obj_i).is_colliding(&*obj_j) && *cooldown <= 0 {
-                //         if (*obj_i).get_mass() > (*obj_j).get_mass() {
-                            // FIXME: You heard the comment, fix me
-                            // (*obj_i).set_mass((*obj_i).get_mass() + (*obj_j).get_mass());
-                            // Resets the cooldown
-                            // *cooldown = 600;
-        //                 } else if (*obj_j).get_mass() > (*obj_i).get_mass() {
-        //                     (*obj_j).set_mass((*obj_j).get_mass() + (*obj_i).get_mass());
-        //                     // Resets the cooldown
-        //                     *cooldown = 600;
-        //                 }
-        //             } else if *cooldown > 0 {
-        //                 *cooldown -= 1;
-        //             }
-        //         }
-        //     }
-        // }
-    }
-
-    fn set_mass(&mut self, new_mass: f32) {
-        self.mass = new_mass;
     }
 
     fn apply_force(&mut self, force: Vector2) {
@@ -129,52 +79,42 @@ impl Object for Asteroid {
     }
 
     fn is_colliding(&self, other: &dyn Object) -> bool {
-        let other_pos = other.get_position();
-
-        let x_overlap = (self.position.x < other_pos.x + other.get_width())
-            && (self.position.x + self.width > other_pos.x);
-
-        let y_overlap = (self.position.y < other_pos.y + other.get_height())
-            && (self.position.y + self.height > other_pos.y);
-
-        x_overlap && y_overlap
+        self.get_position().distance_to(other.get_position()) <= (self.get_width() / 2.0 + other.get_width() / 2.0)
     }
 
     fn is_colliding_box(&mut self, other: &Box<dyn Object>) -> bool {
-        let other_pos = other.get_position();
-
-        let x_overlap = (self.position.x < other_pos.x + other.get_width())
-            && (self.position.x + self.width > other_pos.x);
-
-        let y_overlap = (self.position.y < other_pos.y + other.get_height())
-            && (self.position.y + self.height > other_pos.y);
-
-        x_overlap && y_overlap
+        self.is_colliding(other.as_ref())
     }
 
-    // fn engulf(&mut self, other_vector: &mut Vec<Box<dyn Object>>, index: usize) {
-    //     let self_mass = self.get_mass();
-    //     other_vector.retain(|other| self_mass <= other.get_mass());
-    // }
+    fn collision_update(&self, objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>, cooldown: &mut i32) {
+        // Implement post-collision updates here. (E.g., merge objects or change trajectories) if needed.
+        let len = objects.len();
 
-    fn get_position(&self) -> Vector2 {
-        self.position
-    }
+        for i in 0..len {
+            let obj_i = objects[i].as_mut() as *mut dyn Object;
+            for j in (i + 1)..len {
+                let obj_j = objects[j].as_mut() as *mut dyn Object;
 
-    fn get_velocity(&self) -> Vector2 {
-        self.velocity
-    }
-
-    fn get_width(&self) -> f32 {
-        self.width
-    }
-
-    fn get_height(&self) -> f32 {
-        self.height
-    }
-
-    fn get_mass(&self) -> f32 {
-        self.mass
+                // TODO: Make this unsafe somehow..?
+                unsafe {
+                    if (*obj_i).is_colliding(&*obj_j) && *cooldown <= 0 {
+                        if (*obj_i).get_mass() > (*obj_j).get_mass() {
+                            // FIXME: You heard the comment, fix me
+                            (*obj_i).set_mass((*obj_i).get_mass() + (*obj_j).get_mass());
+                            // Resets the cooldown
+                            *cooldown = 600;
+                        } else if (*obj_j).get_mass() > (*obj_i).get_mass() {
+                            (*obj_j).set_mass((*obj_j).get_mass() + (*obj_i).get_mass());
+                            // Resets the cooldown
+                            *cooldown = 600;
+                        }
+                    } else if *cooldown > 0 {
+                        *cooldown -= 1;
+                    }
+                }
+            }
+        }
+ 
     }
 
     fn gravity_system(&mut self, other: &dyn Object) {
@@ -205,15 +145,13 @@ impl Object for Asteroid {
         // Example: If the object is in a near-parabolic orbit, apply additional velocity changes
     }
 
-    fn clone_box(&self) -> Box<dyn Object> {
-        Box::new(self.clone())
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_color(&mut self, new_color: Color) {
-        self.color = new_color;
-    }
+    fn get_position(&self) -> Vector2 { self.position }
+    fn get_velocity(&self) -> Vector2 { self.velocity }
+    fn get_width(&self) -> f32 { self.mass / 10.0 } // Scale for size here.
+    fn get_height(&self) -> f32 { self.get_width() } // Assuming spherical objects
+    fn get_mass(&self) -> f32 { self.mass }
+    fn get_color(&self) -> Color { self.color }
+    fn set_mass(&mut self, new_mass: f32) { self.mass = new_mass }
+    fn set_color(&mut self, new_color: Color) { self.color = new_color }
+    fn clone_box(&self) -> Box<dyn Object> { Box::new(self.clone()) }
 }
