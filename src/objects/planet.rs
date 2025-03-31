@@ -63,7 +63,7 @@ impl Planet {
 
 impl Object for Planet {
     fn draw(&self, d: &mut RaylibDrawHandle) {
-        d.draw_circle_v(self.position, self.get_width() / 2.0, self.get_color());
+        d.draw_rectangle_v(self.position, Vector2 {x: self.width, y: self.height}, self.color);
     }
 
     fn update(&mut self, other: Option<&dyn Object>) {
