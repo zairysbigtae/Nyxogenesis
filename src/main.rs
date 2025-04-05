@@ -1,19 +1,19 @@
 pub mod objects;
-use objects::planet::Planet;
+use crate::objects::planet::implementation::Planet;
 use objects::{asteroid::Asteroid, object::*};
 use rand::random_range;
 use raylib::prelude::*;
-use std::sync::{Arc, RwLock};
 use std::fmt::Write;
+use std::sync::{Arc, RwLock};
 
 fn main() {
     let (mut rl, thread) = raylib::init().size(600, 560).title("mwa").build();
 
     let mut asteroids: Arc<RwLock<Vec<Box<dyn Object>>>> = Arc::new(RwLock::new(Vec::new()));
-    
+
     {
         let mut asteroids = asteroids.write().unwrap();
-        for _ in 0..100 {
+        for _ in 0..10 {
             let density = random_range(0.1..10.0);
             let cube_size = 5.0;
 
@@ -30,12 +30,11 @@ fn main() {
         }
     }
 
-
     let mut planets: Arc<RwLock<Vec<Box<dyn Object>>>> = Arc::new(RwLock::new(Vec::new()));
-    
+
     {
         let mut planets = planets.write().unwrap();
-        for _ in 0..1 {
+        for _ in 0..5 {
             let density = random_range(0.1..10.0);
             let cube_size = 5.0;
 
@@ -57,7 +56,7 @@ fn main() {
 
     while !rl.window_should_close() {
         // println!("Frame Start!");
-        
+
         let fps = rl.get_fps();
 
         let mut d = rl.begin_drawing(&thread);
@@ -81,7 +80,9 @@ fn main() {
 
                 for j in 0..asteroids.len() {
                     if i != j {
-                        let dist = asteroids[i].get_position().distance_to(asteroids[j].get_position());
+                        let dist = asteroids[i]
+                            .get_position()
+                            .distance_to(asteroids[j].get_position());
                         if dist < nearest_dist {
                             nearest_dist = dist;
                             nearest_index = Some(j);
@@ -89,8 +90,8 @@ fn main() {
                     }
                 }
                 if let Some(j) = nearest_index {
-                    // let mut nearest_planet: &Box<dyn Object> = &planets[j].clone();  
-                    let mut nearest_asteroid: &Box<dyn Object> = &asteroids[j].clone();  
+                    // let mut nearest_planet: &Box<dyn Object> = &planets[j].clone();
+                    let mut nearest_asteroid: &Box<dyn Object> = &asteroids[j].clone();
                     // asteroids[i].update(Some(nearest_planet.as_ref()));
                     asteroids[i].update(Some(nearest_asteroid.as_ref()));
                 } else {
@@ -99,7 +100,7 @@ fn main() {
                 asteroids[i].draw(&mut d);
             }
         }
- 
+
         {
             let mut planets = planets.write().unwrap();
             let mut asteroids = asteroids.write().unwrap();
@@ -111,7 +112,9 @@ fn main() {
 
                 for j in 0..planets.len() {
                     if i != j {
-                        let dist = planets[i].get_position().distance_to(planets[j].get_position());
+                        let dist = planets[i]
+                            .get_position()
+                            .distance_to(planets[j].get_position());
                         if dist < nearest_dist {
                             nearest_dist = dist;
                             nearest_index = Some(j);
@@ -119,8 +122,8 @@ fn main() {
                     }
                 }
                 if let Some(j) = nearest_index {
-                    let mut nearest_planet: &Box<dyn Object> = &planets[j].clone();  
-                    let mut nearest_asteroid: &Box<dyn Object> = &asteroids[j].clone();  
+                    let mut nearest_planet: &Box<dyn Object> = &planets[j].clone();
+                    let mut nearest_asteroid: &Box<dyn Object> = &asteroids[j].clone();
                     planets[i].update(Some(nearest_planet.as_ref()));
                     planets[i].update(Some(nearest_asteroid.as_ref()));
                 } else {
@@ -142,7 +145,7 @@ fn main() {
                 let planets = planets.read().unwrap();
                 planets.clone()
             };
-            
+
             // NOTE: Locking Section
             let mut asteroids_lock = asteroids.write().unwrap();
             let mut planets_lock = planets.write().unwrap();

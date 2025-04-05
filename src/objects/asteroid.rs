@@ -2,10 +2,9 @@ use crate::objects::object::{Object, ObjectFactory};
 // use crate::objects::ObjectAccessor;
 use rand::random_range;
 use raylib::prelude::*;
-use rayon::prelude::*;
 use std::sync::{Arc, RwLockWriteGuard};
 
-const G: f32 = 0.01; // Gravitational constant.
+const G: f32 = 0.01;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Asteroid {
@@ -36,7 +35,9 @@ impl Asteroid {
     // Calculates the gravitational force between this planet and another object.
     fn compute_gravitational_force(&self, other: &dyn Object) -> Vector2 {
         let distance = self.get_position().distance_to(other.get_position());
-        if distance == 0.0 { return Vector2::zero(); }
+        if distance == 0.0 {
+            return Vector2::zero();
+        }
 
         let force_magnitude = (G * self.get_mass() * other.get_mass()) / (distance * distance);
         let direction = (other.get_position() - self.get_position()).normalized();
@@ -58,7 +59,8 @@ impl Asteroid {
     fn compute_tidal_forces(&self, other: &dyn Object) -> Vector2 {
         let distance = self.get_position().distance_to(other.get_position());
         let force_magnitude = (G * self.get_mass() * other.get_mass()) / (distance * distance);
-        let tidal_effect = (self.get_position() - other.get_position()).normalized() * force_magnitude * 0.1; // Simplified. (Here is where you can add more realism)
+        let tidal_effect =
+            (self.get_position() - other.get_position()).normalized() * force_magnitude * 0.1; // Simplified. (Here is where you can add more realism)
         tidal_effect
     }
 }
@@ -98,14 +100,14 @@ impl Object for Asteroid {
         //     for j in (i + 1)..len {
         //         let obj_j = objects[j].as_mut() as *mut dyn Object;
 
-                // TODO: Make this safe somehow..?
-                // unsafe {
-                //     if (*obj_i).is_colliding(&*obj_j) && *cooldown <= 0 {
-                //         if (*obj_i).get_mass() > (*obj_j).get_mass() {
-                            // FIXME: You heard the comment, fix me
-                            // (*obj_i).set_mass((*obj_i).get_mass() + (*obj_j).get_mass());
-                            // Resets the cooldown
-                            // *cooldown = 600;
+        // TODO: Make this safe somehow..?
+        // unsafe {
+        //     if (*obj_i).is_colliding(&*obj_j) && *cooldown <= 0 {
+        //         if (*obj_i).get_mass() > (*obj_j).get_mass() {
+        // FIXME: You heard the comment, fix me
+        // (*obj_i).set_mass((*obj_i).get_mass() + (*obj_j).get_mass());
+        // Resets the cooldown
+        // *cooldown = 600;
         //                 } else if (*obj_j).get_mass() > (*obj_i).get_mass() {
         //                     (*obj_j).set_mass((*obj_j).get_mass() + (*obj_i).get_mass());
         //                     // Resets the cooldown

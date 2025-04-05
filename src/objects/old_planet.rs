@@ -1,7 +1,7 @@
 use crate::objects::Object;
-use std::sync::RwLockWriteGuard;
-use raylib::prelude::*;
 use rand::random_range;
+use raylib::prelude::*;
+use std::sync::RwLockWriteGuard;
 
 const G: f32 = 69.0; // Gravitational constant.
 
@@ -34,7 +34,9 @@ impl Planet {
     // Calculates the gravitational force between this planet and another object.
     fn compute_gravitational_force(&self, other: &dyn Object) -> Vector2 {
         let distance = self.get_position().distance_to(other.get_position());
-        if distance == 0.0 { return Vector2::zero(); }
+        if distance == 0.0 {
+            return Vector2::zero();
+        }
 
         let force_magnitude = (G * self.get_mass() * other.get_mass()) / (distance * distance);
         let direction = (other.get_position() - self.get_position()).normalized();
@@ -56,19 +58,27 @@ impl Planet {
     fn compute_tidal_forces(&self, other: &dyn Object) -> Vector2 {
         let distance = self.get_position().distance_to(other.get_position());
         let force_magnitude = (G * self.get_mass() * other.get_mass()) / (distance * distance);
-        let tidal_effect = (self.get_position() - other.get_position()).normalized() * force_magnitude * 0.1; // Simplified. (Here is where you can add more realism)
+        let tidal_effect =
+            (self.get_position() - other.get_position()).normalized() * force_magnitude * 0.1; // Simplified. (Here is where you can add more realism)
         tidal_effect
     }
 }
 
 impl Object for Planet {
     fn draw(&self, d: &mut RaylibDrawHandle) {
-        d.draw_rectangle_v(self.position, Vector2 {x: self.width, y: self.height}, self.color);
+        d.draw_rectangle_v(
+            self.position,
+            Vector2 {
+                x: self.width,
+                y: self.height,
+            },
+            self.color,
+        );
     }
 
     fn update(&mut self, other: Option<&dyn Object>) {
         self.position += self.velocity;
-        if let Some(other) = other {   
+        if let Some(other) = other {
             self.gravity_system(other);
         }
     }
@@ -79,14 +89,19 @@ impl Object for Planet {
     }
 
     fn is_colliding(&self, other: &dyn Object) -> bool {
-        self.get_position().distance_to(other.get_position()) <= (self.get_width() / 2.0 + other.get_width() / 2.0)
+        self.get_position().distance_to(other.get_position())
+            <= (self.get_width() / 2.0 + other.get_width() / 2.0)
     }
 
     fn is_colliding_box(&mut self, other: &Box<dyn Object>) -> bool {
         self.is_colliding(other.as_ref())
     }
 
-    fn collision_update(&self, objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>, cooldown: &mut i32) {
+    fn collision_update(
+        &self,
+        objects: &mut RwLockWriteGuard<Vec<Box<dyn Object>>>,
+        cooldown: &mut i32,
+    ) {
         // Implement post-collision updates here. (E.g., merge objects or change trajectories) if needed.
         let len = objects.len();
 
@@ -114,7 +129,6 @@ impl Object for Planet {
                 }
             }
         }
- 
     }
 
     fn gravity_system(&mut self, other: &dyn Object) {
@@ -145,13 +159,31 @@ impl Object for Planet {
         // Example: If the object is in a near-parabolic orbit, apply additional velocity changes
     }
 
-    fn get_position(&self) -> Vector2 { self.position }
-    fn get_velocity(&self) -> Vector2 { self.velocity }
-    fn get_width(&self) -> f32 { self.mass / 10.0 } // Scale for size here.
-    fn get_height(&self) -> f32 { self.get_width() } // Assuming spherical objects
-    fn get_mass(&self) -> f32 { self.mass }
-    fn get_color(&self) -> Color { self.color }
-    fn set_mass(&mut self, new_mass: f32) { self.mass = new_mass }
-    fn set_color(&mut self, new_color: Color) { self.color = new_color }
-    fn clone_box(&self) -> Box<dyn Object> { Box::new(self.clone()) }
+    fn get_position(&self) -> Vector2 {
+        self.position
+    }
+    fn get_velocity(&self) -> Vector2 {
+        self.velocity
+    }
+    fn get_width(&self) -> f32 {
+        self.mass / 10.0
+    } // Scale for size here.
+    fn get_height(&self) -> f32 {
+        self.get_width()
+    } // Assuming spherical objects
+    fn get_mass(&self) -> f32 {
+        self.mass
+    }
+    fn get_color(&self) -> Color {
+        self.color
+    }
+    fn set_mass(&mut self, new_mass: f32) {
+        self.mass = new_mass
+    }
+    fn set_color(&mut self, new_color: Color) {
+        self.color = new_color
+    }
+    fn clone_box(&self) -> Box<dyn Object> {
+        Box::new(self.clone())
+    }
 }

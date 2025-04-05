@@ -3,7 +3,9 @@ use object::Object;
 
 pub mod asteroid;
 pub mod planet;
-pub mod object;
+pub mod old_planet;
+pub mod object; 
+pub mod computations;
 
 pub trait ObjectAccessor {
     fn get_object<'a>(&'a self, i: usize) -> &'a Box<dyn Object>;
