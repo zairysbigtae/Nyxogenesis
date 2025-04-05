@@ -1,6 +1,7 @@
 pub mod objects;
 use crate::objects::planet::implementation::Planet;
-use objects::{asteroid::Asteroid, object::*};
+use crate::objects::asteroid::implementation::Asteroid;
+use objects::object::*;
 use rand::random_range;
 use raylib::prelude::*;
 use std::fmt::Write;
